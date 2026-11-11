@@ -1,6 +1,6 @@
 {
   "name": "TDD com Java e JUnit",
-  "image": "mcr.microsoft.com/devcontainers/java:21",
+  "image": "mcr.microsoft.com/devcontainers/java:1-21-bookworm",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -33,7 +33,7 @@
       }
     }
   },
-  "postCreateCommand": "chmod +x mvnw && ./mvnw compile",
+  "postCreateCommand": "chmod +x mvnw && ./mvnw test",
   "forwardPorts": [],
   "remoteUser": "vscode"
 }

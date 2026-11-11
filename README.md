@@ -13,7 +13,7 @@
 3. [Revisão Teórica — TDD](#-revisão-teórica--tdd)
 4. [Preparação do Ambiente](#️-preparação-do-ambiente)
 5. [Estrutura do Repositório](#-estrutura-do-repositório)
-6. [Parte 1 — Exemplo Guiado: Construtor da Conta Bancária](#-parte-1--exemplo-guiado-construtor-da-conta-bancária)
+6. [Parte 1 — Exemplo do Construtor da Conta Bancária](#-parte-1--exemplo-do-construtor-da-conta-bancária)
 7. [Parte 2 — Exercício: Crie os Demais Testes](#-parte-2--exercício-crie-os-demais-testes)
 8. [Referência Rápida — JUnit 5](#-referência-rápida--junit-5)
 9. [Entregáveis](#-entregáveis)
@@ -169,25 +169,35 @@ Detalhando cada etapa:
 3. Clique em **"Create codespace on main"**.
 4. Aguarde o ambiente ser carregado (2–3 minutos na primeira vez).
 
-> 💡 O Codespace já vem com o **Java 21 (JDK)** e todas as extensões do VS Code pré-configuradas, incluindo o **Test Runner for Java** que habilita a view **Testing**.
+> 💡 A configuração do repositório usa a imagem de desenvolvimento Java 21 e instala as extensões do VS Code, incluindo o **Test Runner for Java**. A primeira criação do ambiente pode levar alguns minutos.
 
-> ⏱️ Depois que o Codespace abrir, a importação do projeto Java pode levar mais **1 a 3 minutos**. A view **Testing** normalmente só aparece preenchida depois que essa importação termina.
+> ⏱️ Depois que o Codespace abrir, aguarde a importação do projeto Maven/Java terminar antes de usar a view **Testing**.
 
 ### Passo 3 — Verificar o ambiente
 
-Abra o terminal integrado (`` Ctrl + ` ``) e execute:
+Abra o terminal integrado (`` Ctrl + ` ``) e, na pasta raiz do repositório, execute:
 
 ```bash
 java --version
+./mvnw test
 ```
 
-Deve exibir a versão 21.x. Em seguida, compile o projeto:
+Confirme que `java --version` exibe Java 21.x e que a suíte inicial termina com `BUILD SUCCESS` e **8 testes executados, 0 falhas e 0 erros**. Só comece os passos Red depois desse checkpoint verde. O `pom.xml` exige Java 21; uma versão anterior pode causar `release version 21 not supported`, que é incompatibilidade de ambiente e não Red.
 
-```bash
-./mvnw compile
-```
+> 💡 O repositório inclui o **Maven Wrapper** (`mvnw`, `mvnw.cmd` e `.mvn/wrapper`). No Codespaces, use `./mvnw`; a criação do ambiente garante a permissão de execução e roda esse checkpoint. Na primeira chamada, o script pode baixar o JAR do Wrapper, a distribuição Maven e as dependências; é necessária conexão com o Maven Central. No estado inicial, `ContaTest` tem seis métodos de teste e executa oito casos por causa do teste parametrizado.
 
-> 💡 O projeto versiona o **Maven Wrapper** no próprio repositório (`mvnw`, `mvnw.cmd` e `.mvn/wrapper`). Isso evita depender de uma instalação prévia do Maven no Codespaces. Se o shell informar falta de permissão, execute `chmod +x mvnw` uma vez.
+### Diagnóstico: ambiente ou Red?
+
+| Sinal | Interpretação | O que fazer |
+|---|---|---|
+| `Permission denied` ao executar `./mvnw` | O script não iniciou; ainda não é resultado de teste. | Na raiz, execute `chmod +x mvnw` e tente novamente. |
+| `release version 21 not supported` | Maven está usando um JDK anterior ao exigido. | Confira `java --version` e `JAVA_HOME`; selecione JDK 21 e reabra o terminal. |
+| Wrapper/dependências não baixam ou há erro de conexão | O build não conseguiu preparar o ambiente. | Verifique a conexão ao Maven Central e tente de novo. |
+| `No tests matching pattern` / nenhum teste encontrado | O filtro não corresponde a um teste existente; nenhum comportamento foi exercitado. | Rode `./mvnw test` ou ajuste o filtro após criar o teste. |
+| O teste executou e apontou o resultado/comportamento esperado incorreto | O código foi executado, mas o contrato ainda não é atendido. | Antes da implementação ou da próxima mudança, isso pode ser o Red previsto; após Green, investigue implementação ou teste. |
+| `UnsupportedOperationException` no método ainda não implementado | Red esperado somente no passo guiado que chama aquele método. | Confirme que é o teste novo previsto; implemente o mínimo e rode-o novamente. |
+
+Uma falha de compilação, de descoberta de testes ou de download não é Red: para contar como Red, o teste precisa executar e demonstrar a falta do comportamento que acabou de ser especificado.
 
 ### Passo 4 — Conhecer o Test Explorer
 
@@ -198,34 +208,16 @@ A extensão **Test Runner for Java** permite executar testes de forma visual:
 3. Clique no botão ▶️ ao lado de um teste para executá-lo individualmente.
 4. Use o botão ▶️ no topo para executar todos os testes.
 
-Se a view **Testing** não aparecer automaticamente no Codespaces:
+Se a view **Testing** não mostrar os testes depois da importação:
 
 1. Aguarde a importação do projeto Java terminar. Em um Codespace recém-criado, isso pode levar alguns minutos mesmo após o terminal já estar disponível.
 2. Verifique se o workspace abriu em modo **Standard** para Java.
 3. Abra a Paleta de Comandos e execute **Java: Import Java Projects in Workspace**.
 4. Se ainda não aparecer, execute **Java: Clean Java Language Server Workspace** e recarregue a janela.
 
-### Checklist rápido (quando o Test Explorer sumir)
+O workspace já está configurado para abrir em modo **Standard** e importar o Maven automaticamente. A view visual é conveniência; o terminal é a referência para saber se os testes passaram.
 
-Se a aba **Testing** continuar vazia no Codespaces, siga esta sequência curta:
-
-1. Execute **Developer: Reload Window**.
-2. Execute **Java: Import Java Projects in Workspace**.
-3. Execute **Java: Clean Java Language Server Workspace** e recarregue.
-4. Confirme no terminal: `./mvnw test`.
-5. Se persistir, faça **Codespaces: Rebuild Container**.
-
-> O workspace já está configurado para abrir em modo **Standard** e preferir o Maven Wrapper. Isso é necessário porque o modo **LightWeight** não resolve dependências Maven e pode impedir que a árvore de testes seja exibida.
-
-### Troubleshooting visual da view Testing
-
-Use estes sinais visuais para verificar se o ambiente Java terminou de carregar:
-
-1. **Barra de status do VS Code**: se o Java ainda estiver inicializando ou importando dependências, aguarde até a atividade terminar.
-2. **Modo do workspace Java**: confirme que o ambiente não ficou em **LightWeight**. O projeto deve abrir em **Standard**.
-3. **Explorer / Java Projects**: o `pom.xml` deve ser reconhecido como projeto Maven importado, não apenas como um arquivo solto.
-4. **Classe de teste**: ao abrir `ContaTest.java`, os ícones de executar/debug do Java devem aparecer acima da classe e dos métodos de teste.
-5. **Activity Bar**: a aba **Testing** pode existir antes da descoberta dos testes, mas a árvore só será populada depois da importação do projeto.
+> **Falha esperada de TDD não é falha do ambiente:** na Parte 2, o teste novo falha porque o método ainda lança `UnsupportedOperationException`. Erros como compilador incompatível, dependências que não baixam ou falha ao iniciar o Wrapper devem ser resolvidos antes de interpretar o resultado como Red.
 
 Você também pode executar testes pelo terminal:
 
@@ -236,11 +228,8 @@ Você também pode executar testes pelo terminal:
 # Executar com mais detalhes
 ./mvnw test -Dsurefire.printSummary=true
 
-# Filtrar por nome de teste
-./mvnw test -Dtest="ContaTest#construtor_DadosValidos_CriaContaCorretamente"
-
-# Filtrar por método (padrão wildcard)
-./mvnw test -Dtest="ContaTest#depositar*"
+# Filtrar os testes do construtor, já disponíveis no projeto
+./mvnw test -Dtest="ContaTest#construtor*"
 ```
 
 ---
@@ -251,6 +240,8 @@ Você também pode executar testes pelo terminal:
 tdd-junit-java/
 ├── .devcontainer/
 │   └── devcontainer.json              ← Configuração do Codespaces
+├── .github/workflows/
+│   └── java-tests.yml                 ← Testes automáticos com Java 21
 ├── .mvn/wrapper/
 │   └── maven-wrapper.properties       ← Configuração do Maven Wrapper
 ├── mvnw                               ← Script do Maven Wrapper para Linux/macOS
@@ -269,9 +260,23 @@ tdd-junit-java/
 
 ---
 
-## 🟢 Parte 1 — Exemplo Guiado: Construtor da Conta Bancária
+### Distribuição sugerida do tempo (2 horas)
 
-> **Objetivo:** Entender a estrutura de um teste unitário com JUnit 5 e o ciclo TDD, usando o construtor da classe `Conta` como exemplo completo.
+| Tempo | Etapa e checkpoint |
+|---|---|
+| 10 min | Preparar o ambiente e obter o checkpoint inicial verde: Java 21 e 8 casos aprovados. |
+| 15 min | Revisar AAA, JUnit e os testes do construtor prontos no repositório. |
+| 25 min | Fazer os dois ciclos guiados de `depositar`: valor válido e valor zero. |
+| 20 min | Testar `sacar`, um cenário por ciclo; conferir saldo preservado nas rejeições. |
+| 20 min | Testar `encerrar` e, em seguida, operações numa conta encerrada. |
+| 20 min | Testar `transferir` com sucesso, validações e estados preservados nas duas contas. |
+| 10 min | Executar a suíte completa, conferir pelo menos 15 casos e preparar a entrega. |
+
+O núcleo obrigatório são os cenários da matriz e todos os checkpoints Red → Green. A extração de validação duplicada é a etapa de refatoração; se o tempo acabar, não pule testes para forçá-la.
+
+## 🟢 Parte 1 — Exemplo do Construtor da Conta Bancária
+
+> **Objetivo:** Entender a estrutura de um teste unitário com JUnit 5 observando os testes já prontos do construtor. O ciclo TDD executável está na Parte 2.
 
 ### 1.1 Analisar o código de produção
 
@@ -317,78 +322,54 @@ Analise atentamente os testes do construtor e observe:
 - **Nomenclatura:** os nomes dos testes seguem `metodo_Cenario_ResultadoEsperado`.
 - **Cobertura:** há testes para o caminho feliz, cenários de exceção e casos de borda.
 
-### 1.5 Entendendo o ciclo TDD aplicado ao construtor
+### 1.5 O que este exemplo demonstra (e o que não demonstra)
 
-Vamos recapitular como o construtor foi implementado seguindo TDD:
-
-#### 🔴 RED — O teste foi escrito primeiro
-
-```java
-@Test
-void construtor_DadosValidos_CriaContaCorretamente() {
-    var conta = new Conta("Maria", 100);
-
-    assertEquals("Maria", conta.getTitular());
-    assertEquals(100, conta.getSaldo());
-    assertTrue(conta.isAtiva());
-}
-```
-
-Com o construtor lançando `UnsupportedOperationException`, este teste falhava.
-
-#### 🟢 GREEN — O código mínimo foi implementado
-
-```java
-public Conta(String titular, double saldoInicial) {
-    if (titular == null || titular.isBlank())
-        throw new IllegalArgumentException("O titular não pode ser nulo ou vazio.");
-    if (saldoInicial < 0)
-        throw new IllegalArgumentException("O saldo inicial não pode ser negativo.");
-
-    this.titular = titular;
-    this.saldo = saldoInicial;
-    this.ativa = true;
-}
-```
-
-Após implementar, o teste passou.
-
-#### 🔵 REFACTOR — O código já está limpo
-
-Neste caso, não há necessidade de refatoração. Em métodos mais complexos, esta é a hora de eliminar duplicação e melhorar nomes.
+O construtor e seus testes já estão implementados quando você recebe o repositório. Eles ajudam a reconhecer JUnit, AAA e as regras de validação, mas o estado atual dos arquivos, sozinho, **não comprova a ordem histórica** em que teste e implementação foram escritos. Portanto, não trate o construtor pronto como uma demonstração executável da etapa Red. A Parte 2 apresenta um ciclo pequeno que você executará de fato, começando por `depositar`.
 
 ---
 
 ## 🏦 Parte 2 — Exercício: Crie os Demais Testes
 
-> **Objetivo:** Praticar TDD do zero, escrevendo testes e implementando os métodos restantes da classe `Conta`.
+> **Objetivo:** Praticar ciclos pequenos de TDD para os métodos restantes da classe `Conta`. O código inicial é um esqueleto didático, não uma implementação bancária pronta para uso real.
 
-Agora é a sua vez! Usando como modelo os testes do construtor, você deve aplicar o ciclo TDD para cada um dos métodos abaixo.
+Agora é a sua vez! Faça um ciclo completo por vez. **Não escreva primeiro todos os testes:** cada pequeno teste deve orientar a próxima mudança de produção.
 
 ### Requisitos
 
-Abra o arquivo `src/main/java/contabancaria/Conta.java` e leia a documentação de cada método. Você encontrará:
+Abra `src/main/java/contabancaria/Conta.java` e use o Javadoc de cada método como contrato. A sequência abaixo respeita as dependências entre cenários; não testa comportamento sem regra definida:
 
-| Método | Regras de Validação |
-|---|---|
-| `depositar` | Valor > 0, conta ativa |
-| `sacar` | Valor > 0, conta ativa, saldo suficiente |
-| `transferir` | Ambas ativas, valor > 0, saldo suficiente |
-| `encerrar` | Conta ativa, saldo = 0 |
+| Ordem | Método / cenário | Preparação e ação | Resultado esperado |
+|---|---|---|---|
+| 1 | `depositar` válido | Conta com saldo 100; depositar 50 | Saldo 150 |
+| 1 | `depositar` zero ou negativo | Conta ativa; depositar 0 ou -10 | `IllegalArgumentException`; saldo preservado |
+| 2 | `sacar` válido | Saldo 100; sacar 40 | Saldo 60 |
+| 2 | `sacar` zero/negativo | Conta ativa; sacar 0 ou -10 | `IllegalArgumentException`; saldo preservado |
+| 2 | `sacar` acima do saldo | Saldo 100; sacar 101 | `IllegalStateException`; saldo preservado |
+| 3 | `encerrar` com saldo zero | Conta nova; encerrar | `isAtiva()` é `false` |
+| 3 | `encerrar` com saldo positivo | Saldo 1; encerrar | `IllegalStateException`; conta continua ativa e saldo preservado |
+| 3 | `encerrar` conta inativa | Encerrar duas vezes | Segunda chamada lança `IllegalStateException`; conta permanece inativa |
+| 4 | Operação após encerramento | Encerrar conta antes de depositar/sacar | `IllegalStateException`; estado preservado |
+| 5 | `transferir` válido | Origem 200, destino 100; transferir 50 | Origem 150 e destino 150 |
+| 5 | `transferir` zero/negativo | Duas contas ativas | `IllegalArgumentException`; os dois saldos preservados |
+| 5 | `transferir` acima do saldo | Origem 200, destino 100; transferir 201 | `IllegalStateException`; os dois saldos preservados |
+| 5 | `transferir` conta inativa | Encerrar origem ou destino antes | `IllegalStateException`; os dois saldos preservados |
+
+Quando uma linha lista alternativas (por exemplo, zero e negativo, ou origem e destino inativos), teste cada caso separadamente ou use `@ParameterizedTest` com uma invocação por entrada. Para toda transferência rejeitada, verifique os saldos de **origem e destino**.
 
 ### Instruções
 
-1. Abra `src/test/java/contabancaria/ContaTest.java`.
-2. Leia as sugestões de testes nos comentários de cada seção.
-3. Para cada método, siga o ciclo TDD:
-   - 🔴 Escreva um teste → execute → veja falhar.
-   - 🟢 Implemente o código mínimo em `Conta.java` → execute → veja passar.
-   - 🔵 Refatore se necessário.
-   - Repita para o próximo cenário de teste.
+1. Abra `src/test/java/contabancaria/ContaTest.java`. Insira cada novo método dentro de `class ContaTest`, na seção do método correspondente. Os imports de `assertEquals`, `assertThrows` e `assertTrue` já existem. Se usar `assertFalse` para verificar uma conta encerrada, acrescente `import static org.junit.jupiter.api.Assertions.assertFalse;`.
+2. Escreva **um comportamento por vez**, execute somente o teste novo e confirme que ele compila e falha pela causa esperada.
+3. Em `Conta.java`, substitua apenas o corpo do método sob teste; mantenha a assinatura e não implemente regras futuras antes que um teste as exija.
+4. Rode o teste direcionado até obter **Green**. Então rode a suíte completa antes de considerar a etapa concluída.
+5. Refatore apenas quando já houver comportamento coberto e uma melhoria estrutural concreta. Rode toda a suíte antes e depois; os resultados devem continuar verdes.
+6. Siga a ordem: `depositar` → `sacar` → `encerrar` → testar operações em conta encerrada → `transferir`. Transferência depende de contas ativas/inativas testáveis; prepare uma conta encerrada pelo método público `encerrar()`.
+
+> **Sobre dinheiro:** o exercício usa `double` para manter o foco em testes e contratos. `double` não representa todas as frações decimais exatamente; use a tolerância já adotada nos testes (`assertEquals(esperado, atual, 0.001)`) para saldos fracionários. Em sistemas financeiros reais, prefira uma representação decimal apropriada, como `BigDecimal`; essa migração não faz parte deste exercício.
 
 ### Exemplo de como começar — Teste do depositar
 
-Siga o mesmo padrão dos testes do construtor:
+Adicione este teste dentro da classe `ContaTest`:
 
 ```java
 @Test
@@ -404,10 +385,82 @@ void depositar_ValorValido_AtualizaSaldo() {
 }
 ```
 
-1. Escreva este teste e execute → ele vai **falhar** (🔴) porque `depositar` lança `UnsupportedOperationException`.
-2. Vá até `Conta.java` e implemente o código mínimo de `depositar` → execute → veja **passar** (🟢).
-3. Refatore se necessário (🔵).
-4. Escreva o próximo teste (ex: `depositar_ValorZero_LancaIllegalArgumentException`) e repita o ciclo.
+Execute somente esse cenário:
+
+```bash
+./mvnw -Dtest="ContaTest#depositar_ValorValido_AtualizaSaldo" test
+```
+
+**🔴 Red esperado:** o teste compila e é executado, mas falha porque a implementação atual de `depositar` lança `UnsupportedOperationException`. Essa falha é intencional: o método é um ponto de partida ainda não implementado. Se o comando não inicia, o teste não compila ou o Java não suporta a versão 21, isso é um problema de ambiente/código e não um Red válido.
+
+#### 🟢 Green — implemente somente o necessário
+
+Substitua o corpo de `depositar` em `Conta.java` por esta implementação mínima para o cenário atual:
+
+```java
+public void depositar(double valor) {
+    saldo += valor;
+}
+```
+
+Rode o mesmo comando novamente. O teste deve passar. Ainda não adicione regras que não foram dirigidas por um teste: para o próximo ciclo, escreva primeiro um teste para depósito zero (e depois para valor negativo), confirme que ele falha pelo comportamento, implemente a validação e rode os testes outra vez.
+
+### Segundo ciclo — valor zero (Red por comportamento)
+
+Depois que o teste de depósito válido estiver verde, adicione outro teste na seção `depositar` de `ContaTest`. O teste abaixo falha por uma razão diferente do stub: agora o método executa normalmente, mas o depósito zero ainda não lança a exceção exigida.
+
+```java
+@Test
+void depositar_ValorZero_LancaIllegalArgumentException() {
+    var conta = new Conta("Maria", 100);
+
+    assertThrows(IllegalArgumentException.class, () -> conta.depositar(0));
+    assertEquals(100, conta.getSaldo(), 0.001);
+}
+```
+
+Execute somente esse teste:
+
+```bash
+./mvnw -Dtest="ContaTest#depositar_ValorZero_LancaIllegalArgumentException" test
+```
+
+**🔴 Red esperado:** o teste é executado e falha porque nenhuma `IllegalArgumentException` é lançada. Não confunda isso com “nenhum teste encontrado”, erro de compilação ou problema de Java/Wrapper: nesses casos, o comportamento sequer foi exercitado.
+
+Para obter **Green**, acrescente ao corpo de `depositar` a validação necessária para este contrato e mantenha a atualização do saldo apenas após ela:
+
+```java
+if (valor <= 0) {
+    throw new IllegalArgumentException("O valor do depósito deve ser maior que zero.");
+}
+saldo += valor;
+```
+
+Rode o teste de valor zero e o teste de depósito válido. Ambos devem passar; então execute `./mvnw test`. No próximo ciclo, escreva primeiro o teste para valor negativo e só então confirme/implemente esse comportamento. A regra de conta ativa também deve ter seu próprio teste antes de ser adicionada.
+
+#### 🔵 Refactor — preserve o verde
+
+Depois que os testes de valores positivos e não positivos para depósito e saque estiverem verdes, compare as duas validações `valor <= 0`. Se a mesma condição ficou duplicada, extraia-a para um método privado e chame-o nos dois métodos.
+
+Antes da refatoração, cada método pode ter sua própria validação:
+
+```java
+if (valor <= 0) {
+    throw new IllegalArgumentException("O valor deve ser maior que zero.");
+}
+```
+
+Depois, mantenha a mesma validação em um único lugar:
+
+```java
+private void validarValorPositivo(double valor) {
+    if (valor <= 0) {
+        throw new IllegalArgumentException("O valor deve ser maior que zero.");
+    }
+}
+```
+
+Chame `validarValorPositivo(valor)` em `depositar` e `sacar`, sem alterar as assinaturas nem o restante dos contratos. Rode `./mvnw test` imediatamente antes de extrair e novamente depois; todas as verificações devem continuar verdes. Se não houver duplicação real a eliminar, não force uma refatoração.
 
 ### Dicas
 
@@ -421,9 +474,9 @@ void depositar_ValorNegativo_LancaIllegalArgumentException() {
 }
 ```
 
-Para testar conta inativa, você precisa primeiro encerrar a conta (o que requer implementar `encerrar` antes). Planeje a ordem de implementação!
+Para verificar uma operação rejeitada, confira também o estado depois da exceção. Por exemplo, ao tentar sacar ou transferir um valor inválido/insuficiente, confirme que o saldo não mudou; numa transferência rejeitada, confira **os dois saldos**. O contrato não especifica regras adicionais para destino `null` ou transferência para a própria conta; não invente esses cenários como requisitos desta atividade.
 
-Para testar `transferir`, crie duas contas e verifique os saldos de ambas:
+Para testar `transferir`, crie duas contas ativas e verifique os saldos de ambas:
 
 ```java
 @Test
@@ -440,16 +493,20 @@ void transferir_ValorValido_AtualizaSaldoDeAmbasContas() {
 
 ### Executar testes
 
+Os filtros por método só funcionam depois que existe pelo menos um teste com aquele prefixo. Antes disso, o Surefire informa que não encontrou testes; nenhum teste foi executado e esse resultado não é Red.
+
 ```bash
 # Todos os testes
 ./mvnw test
 
-# Filtrar por método
+# Use cada filtro depois de criar testes daquele método
 ./mvnw test -Dtest="ContaTest#depositar*"
 ./mvnw test -Dtest="ContaTest#sacar*"
+./mvnw test -Dtest="ContaTest#encerrar*"
+./mvnw test -Dtest="ContaTest#transferir*"
 ```
 
-> ⚠️ **Mínimo exigido:** Crie pelo menos **15 testes** cobrindo todos os métodos da classe `Conta`.
+> ⚠️ **Mínimo exigido:** o relatório do Maven deve mostrar pelo menos **15 casos executados** no total. Os 8 casos iniciais do construtor já contam; os casos de `@ParameterizedTest` contam por cada valor executado, não apenas como um método Java. Use a matriz para priorizar todos os comportamentos e estados preservados; não crie testes repetidos apenas para atingir a contagem.
 
 ---
 
@@ -512,9 +569,9 @@ assertEquals(tamanhoEsperado, lista.size());
 # Com detalhes
 ./mvnw test -Dsurefire.printSummary=true
 
-# Com cobertura (requer plugin JaCoCo no pom.xml)
-./mvnw test jacoco:report
 ```
+
+> Este projeto não configura JaCoCo; cobertura não faz parte dos comandos validados neste roteiro.
 
 ---
 
@@ -526,20 +583,20 @@ Para comprovar a realização da atividade, você deve entregar as seguintes evi
 
 | # | Item | Critério | Local |
 |---|---|---|---|
-| 1 | Testes da Conta Bancária | Mínimo de 15 testes cobrindo todos os métodos | `src/test/java/contabancaria/ContaTest.java` |
-| 2 | Código da Conta Bancária | Classe Conta.java totalmente implementada (sem `UnsupportedOperationException`) | `src/main/java/contabancaria/Conta.java` |
-| 3 | Todos os testes passando | Screenshot ou saída do terminal mostrando `./mvnw test` com todos os testes passando | Incluir no commit |
-| 4 | Histórico de commits | Commits incrementais mostrando o ciclo TDD (ex: "red: teste depositar", "green: implementa depositar") | Histórico do Git |
+| 1 | Testes da Conta Bancária | Pelo menos 15 casos executados no total, incluindo os 8 iniciais e cobrindo os comportamentos da matriz | `src/test/java/contabancaria/ContaTest.java` |
+| 2 | Código da Conta Bancária | Implementação dos contratos exercitados, sem `UnsupportedOperationException` nos métodos da atividade | `src/main/java/contabancaria/Conta.java` |
+| 3 | Suíte verde e evidência | Saída ou captura de tela de `./mvnw test` após implementar os comportamentos | Entregar no ambiente virtual da disciplina |
+| 4 | Histórico de commits (recomendado) | Commits incrementais mostrando o ciclo TDD (ex.: "red: teste depositar", "green: implementa depositar") | Histórico do Git |
 
-### 📸 Screenshot dos testes
+### 📸 Evidência de execução
 
-Após concluir, execute e capture a saída:
+Após concluir, execute os testes e guarde a saída ou uma captura de tela para enviar junto com a atividade no ambiente virtual:
 
 ```bash
-./mvnw test 2>&1 | tee resultado-testes.txt
+./mvnw test
 ```
 
-Faça o commit do arquivo `resultado-testes.txt` junto com seu código.
+Não versione um arquivo de log ou screenshot no repositório. O commit contém código e testes; a evidência é entregue no ambiente virtual, evitando conflito entre os dois destinos.
 
 ### 🔀 Padrão de commits (recomendado)
 
@@ -557,14 +614,20 @@ refactor: extrai validação para método privado
 
 ### 📤 Como entregar
 
-1. Faça commit de todas as alterações:
+1. Confirme que `origin` aponta para o seu fork:
+   ```bash
+   git remote -v
+   ```
+2. Na branch da atividade, faça commit e envie-a ao fork:
    ```bash
    git add .
    git commit -m "Atividade TDD completa"
-   git push origin main
+   git push -u origin HEAD
    ```
-2. Confirme que o código está no seu fork no GitHub.
-3. Envie o link do seu repositório (fork) no ambiente virtual da disciplina.
+   `HEAD` envia a branch atual; não faça push direto para `main` se estiver trabalhando em uma branch. Se `origin` não for o seu fork, corrija o remoto antes de enviar.
+3. Envie o link do fork e a evidência de testes no ambiente virtual da disciplina.
+
+O workflow do GitHub Actions executa a suíte com Java 21 em Linux a cada push e pull request. No repositório inicial, são 8 casos; conforme você acrescenta os testes, a mesma automação os executa também. Assim, ela confirma o build e os comportamentos cobertos, mas não implementa nem substitui testes que ainda não foram escritos.
 
 ---
 
