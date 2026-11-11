@@ -81,7 +81,126 @@ class ContaTest {
         assertEquals(saldo, conta.getSaldo(), 0.001);
         assertTrue(conta.isAtiva());
     }
+    @Test 
+    void construtor_DepositoValorValido_AtualizaSaldo()
+    {
+        var conta=new Conta("Maria",0);
+        conta.depositar(5);
+        assertEquals(5,conta.getSaldo());
+           
+    }
 
+    @Test 
+    void construtor_DepositoValorZerado_LancaIllegalArgumentException()
+    {
+       
+        assertThrows(IllegalArgumentException.class, () -> new Conta("Maria",0).depositar(0));
+    }
+    @Test
+    void construtor_DepositoValorNegativo_LancaIllegalArgumentException()
+    {
+       
+        assertThrows(IllegalArgumentException.class, () -> new Conta("Maria",0).depositar(-50));
+    }
+    @Test
+    void construtor_DepositoContaInativa_LancaIllegalStateException()
+    {
+       
+        assertThrows(IllegalStateException.class, () -> new Conta("Maria",0,false).depositar(1));
+    }
+
+    @Test 
+    void construtor_SaqueValorValido_AtualizaSaldo()
+    {
+        var conta=new Conta("Maria",10);
+        conta.sacar(5);
+        assertEquals(5,conta.getSaldo());
+           
+    }
+    @Test
+    void construtor_SaqueValorAcimadoSaldo_LancaIllegalStateException()
+    {
+        assertThrows(IllegalStateException.class,() -> new Conta("Maria",100).sacar(101) );
+    }
+    @Test
+    void construtor_SaqueValorZerado_LancaIllegalArgumentException()
+    {
+        assertThrows(IllegalArgumentException.class,() -> new Conta("Maria",100).sacar(0) );
+    }
+    @Test 
+     void construtor_SaqueValorNegativo_LancaIllegalArgumentException()
+    {
+        assertThrows(IllegalArgumentException.class,() -> new Conta("Maria",100).sacar(-10) );
+    }
+    @Test 
+    void construtor_SaqueContaInativa_LancaIllegalStateException()
+    {
+       
+        assertThrows(IllegalStateException.class, () -> new Conta("Maria",10,false).sacar(1));
+    }
+    @Test 
+    void construtor_TransferenciaValida_AtualizaSaldoDeAmbos()
+    {
+        var conta1=new Conta("Maria",100);
+        var conta2=new Conta("Douglas",0);
+        conta1.transferir(conta2, 60);
+        assertEquals(60,conta2.getSaldo());
+        assertEquals(40,conta1.getSaldo());
+    }
+    @Test 
+    void contrutor_TransferenciaSaldoInsuficiente_LancaIllegalArgumentException()
+    {
+        assertThrows(IllegalArgumentException.class,() -> new Conta("Maria",100).transferir(new Conta("Douglas",0),110));
+    }
+     @Test 
+    void contrutor_TransferenciaSaldoZerado_LancaIllegalArgumentException()
+    {
+        assertThrows(IllegalArgumentException.class,() -> new Conta("Maria",100).transferir(new Conta("Douglas",0),0));
+    }
+
+    @Test 
+    void contrutor_TransferenciaSaldoNegativo_LancaIllegalArgumentException()
+    {
+        assertThrows(IllegalArgumentException.class,() -> new Conta("Maria",100).transferir(new Conta("Douglas",0),-10));
+    }
+    @Test 
+    void contrutor_TransferenciaContaOrigemInativa_LancaIllegalArgumentException()
+    {
+        assertThrows(IllegalStateException.class,() -> new Conta("Maria",100,false).transferir(new Conta("Douglas",0),10));
+    }
+    @Test 
+    void contrutor_TransferenciaContaDestinoInativa_LancaIllegalArgumentException()
+    {
+        assertThrows(IllegalStateException.class,() -> new Conta("Maria",100).transferir(new Conta("Douglas",0,false),10));
+    }
+
+    @Test 
+    void construtor_ContaEncerrada_IsAtivaFalse()
+    {
+        var conta=new Conta("Maria",0);
+        conta.encerrar();
+        assertEquals(false, conta.isAtiva());
+    }
+
+    @Test 
+    void construtor_ContaEncerrada_ZeradaFunciona()
+    {
+        var conta=new Conta("Maria",0);
+        conta.encerrar();
+        assertEquals(false, conta.isAtiva());
+    }
+
+    @Test
+    void construtor_ContaEncerradaComSaldo_LancaIllegalStateException()
+    {
+        assertThrows(IllegalStateException.class, () -> new Conta("Maria",10,true).encerrar());
+    }
+    @Test
+    void construtor_ContaEncerradaNovamenteEncerrada_LancaIllegalStateException()
+    {
+        assertThrows(IllegalStateException.class, () -> new Conta("Maria",10,false).encerrar());
+    }
+    
     // =======================================================
     //  PARTE 2 — ESCREVA OS TESTES ABAIXO (TDD)
     //  Lembre-se: escreva o teste PRIMEIRO, veja FALHAR (Red),
